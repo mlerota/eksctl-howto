@@ -1,0 +1,25 @@
+# Example with Application LoadBalancer
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: nginx-test
+  labels:
+    app: nginx-test
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/load-balancer-name: testinggg
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/cluster-name: <your-cluster-name>
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/certificate-arn: '<your-arn-here>'
+    alb.ingress.kubernetes.io/aws-vpc-id: <VPC_id>
+    alb.ingress.kubernetes.io/subnets: <subnet1_id>, <subnet2_id>, <subnet3_id>
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /*
+            backend:
+              serviceName: nginx-service
+              servicePort: 80
