@@ -1,0 +1,12 @@
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: grafana-prod # must use lover case letters
+  namespace: argocd
+  labels:
+    app: nginx-test
+spec:
+  serviceRef:
+    name: nginx-service # route traffic to the grafana-dev
+    port: 80
+  targetGroupARN: <your-arn-here>

@@ -1,0 +1,19 @@
+# Service example with classic load balancer
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-test-ingress
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: '<your-arn-here>'
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: '443'
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+    service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags: "name=nginx-test"
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 443
+    targetPort: 80
+  selector:
+    app: nginx-test
+  loadBalancerSourceRanges:
+  - "111.11.11.11/32"

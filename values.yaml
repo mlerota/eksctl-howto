@@ -1,0 +1,11 @@
+env:
+  AWS_REGION: eu-west-1
+  AWS_DEFAULT_REGION: eu-west-1
+
+envVarsFromSecret:
+  AWS_ACCESS_KEY_ID:
+    secretKeyRef: "aws-credentials"
+    key: "id"
+  AWS_SECRET_ACCESS_KEY:
+    secretKeyRef: "aws-credentials"
+    key: "key"

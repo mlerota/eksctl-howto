@@ -1,0 +1,23 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": "ssm:DescribeParameters",
+            "Resource": "*"
+        },
+        {
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
+            "Action": [
+                "ssm:Get*",
+                "ssm:Put*"
+            ],
+            "Resource": [
+                "arn:aws:ssm:<region>:<aws_acc_no>:parameter/argo/*",
+                "arn:aws:ssm:<region>:<aws_acc_no>:parameter/k8s-cluster1/*"
+            ]
+        }
+    ]
+}
