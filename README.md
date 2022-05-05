@@ -81,27 +81,25 @@ Create access key and save the output
 ```
 aws iam create-access-key --user-name argocd --profile=your-aws-profile
 ```
-Modify aws-secret.yaml file
-```
-key1=$(echo -n "your-AccessKeyId-here" | base64)
-key2=$(echo -n "your-SecretAccessKey-here" | base64)
-sed -i "s/base64-AccessKeyId/$key1/g" aws-secret.yaml
-sed -i "s/base64-SecretAccessKey/$key2/g" aws-secret.yaml
-```
-Now apply the secret to kubernetes cluster
+### External secrets install
 ```
 kubectl create namespace external-secrets
-kubectl apply -f aws-secret.yaml -n external-secrets
-```
-### External secrets install
-In `values.yaml` file, change AWS_REGION and AWS_DEFAULT_REGION only. Don't modify the rest of the file.  Then we'll install external secrets add-on.
-```
-helm repo add external-secrets https://external-secrets.github.io/kubernetes-external-secrets/
+helm repo add external-secrets https://charts.external-secrets.io
 helm repo update
-helm install ekst-secrets --namespace external-secrets \
- external-secrets/kubernetes-external-secrets \
- --values values.yaml
+helm install external-secrets -n external-secrets \
+ external-secrets/external-secrets
 ```
+Create keys  for AWS credentials
+```
+echo -n 'KEYID' > ./access-key
+echo -n 'SECRETKEY' > ./secret-access-key
+```
+For every namespace you want to use external secrets, you need to add AWS credentials in that namespace.
+```
+kubectl create secret generic awssm-secret -n argocd --from-file=./access-key  --from-file=./secret-access-key
+kubectl create secret generic awssm-secret -n nginx-test --from-file=./access-key  --from-file=./secret-access-key
+```
+More on install and external secrets here: https://external-secrets.io
 #### AWS Load Balancer Controller Installation
 In order to use AWS Application and Network load balancers, and TargetGroupBinding feature, we need to install this AWS Load Balancer controller. Simple old Classic Load Balancer will work out of the box as a service, and no special controllers are needed. First we need to Install the TargetGroupBinding CRDs.
 ```
@@ -114,7 +112,7 @@ helm repo update
 helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=<cluster-name> --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller
 ```
 #### ArgoCD installation
-There are two ways how you can install ArgoCD. With AWS SSL certificate and classic loadbalancer as a service. Or default install without SSL. Check official documentation for that. We are going to use classic AWS loadbalancer and AWS SSL certificate to access ArgoCD web UI. Of course you need to have your SSL certificate added in AWS cert manager. You can check `argo-install-v2.2.5-example.yaml` file for complete example. 
+There are two ways how you can install ArgoCD. With AWS SSL certificate and classic loadbalancer as a service. Or default install without SSL. Check official documentation for that. We are going to use classic AWS loadbalancer and AWS SSL certificate to access ArgoCD web UI. Of course you need to have your SSL certificate added in AWS cert manager. You can check `argo-install-v2.2.5-example.yaml` file for complete example.
 ```
 wget https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 # In kind: Deployment add --insecure
@@ -181,7 +179,7 @@ Now go to AWS IAM user argocd and upload the public key you've just created. Und
   #### TargetGroupBinding part
 3. Create test Target Group on AWS. For target type use IP addresses, protocol http port 80 and select VPC where Kubernetes is running. Don't include any IP addresses. Copy the arn of the TargetGroup you've just created.
 
-4. Edit the`repoURL` line from `sample-app/argocd-app-manifest.yaml` file and line `targetGroupARN:` from `sample-app/apps/nginx-test/targetGroupBinding.yaml` file.
+4. Edit the`repoURL` line from `sample-app/argocd-app-manifest.yaml` file and line `targetGroupARN:` from `sample-app/apps/example1/targetGroupBinding.yaml` file. Rename or clone/copy example1 directory to nginx-test. (refered in argocd-app-manifest.yaml file)
 
 5. Modify your existing ALB settings - "View/edit rules" and add rules that will point to your target group we created in step 3.
 
@@ -199,8 +197,19 @@ argocd repo add ssh://<YOUR_SSH_KEY_ID>@git-codecommit.<region>.amazonaws.com/v1
 ```
 kubectl apply -f argocd-app-manifest.yaml
 ```
+You can check if the external secrets is working by checking the secret by
+```
+kubectl get secrets nginx-secret -n nginx-test -o jsonpath="{.data.secret\.txt}" | base64 -d
+```
+If you don't see the secret check if you did
+```
+kubectl create secret generic awssm-secret -n nginx-test --from-file=./access-key  --from-file=./secret-access-key
+```
+
 10. Check the TargetGroup on AWS and under Registered targets you should see IP address that is running your deployment. If the status is unhealthy, probably you forgot to allow incoming traffic from your loadbalancer in step1. Go to the security group of kubernetes node and add the correct SG on incoming traffic.
 
 11. External secrets. You can see the secret in pod shell in /etc/k8s-secret-nginx directory.
 
 12. If you want to use classic loadbalancer without TargetGroupBinding, you can find the service example in example2 directory. Also Application loadbalancer example in example3 directory.
+
+13. If you want to use ECR from another AWS account, check file ecr-from-another-acc-policy.yaml. Go to the account where you have ECR, select some repository and click on "Permissions".  Click on "Edit Policy JSON" and add policy from ecr-from-another-acc-policy.yaml. Change arn to suit the role of the nodegroup role of the k8s instance.  Add the same for every repository you want to use.

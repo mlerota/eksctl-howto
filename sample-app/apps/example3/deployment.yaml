@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nginx-test
-  namespace: argocd
+  namespace: nginx-test
   labels:
     app: nginx-test
 spec:
