@@ -11,7 +11,7 @@ spec:
     # Add ssh-pub-key to AWS iam user and paste SSH key ID you get here
     repoURL: ssh://<YOURSSHKEY>@git-codecommit.<region>.amazonaws.com/v1/repos/argocd-test
     targetRevision: master
-    path: apps/nginx-test
+    path: apps/example1
   destination:
     server: https://kubernetes.default.svc
     namespace: nginx-test

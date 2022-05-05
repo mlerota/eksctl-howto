@@ -2,7 +2,7 @@ apiVersion: elbv2.k8s.aws/v1beta1
 kind: TargetGroupBinding
 metadata:
   name: grafana-prod # must use lover case letters
-  namespace: argocd
+  namespace: nginx-test
   labels:
     app: nginx-test
 spec:
